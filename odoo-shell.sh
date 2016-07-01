@@ -9,6 +9,6 @@ if [ -z "$ADDONS_PATH" ]; then
     exit 1
 fi
 
-exec $HOME/OCB/odoo.py --addons-path=$ADDONS_PATH shell --config=$HOME/odoo-server.conf --unaccent \$@
+exec $HOME/OCB/odoo.py --addons-path=$ADDONS_PATH shell --config=$HOME/odoo-server.conf --unaccent $@
 
 #!/bin/bash

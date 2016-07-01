@@ -4,4 +4,4 @@ if [ -z "$HOME" ]; then
     exit 1
 fi
 
-exec $HOME/OCB/odoo.py --config=$HOME/odoo-server.conf --unaccent \$@
+exec $HOME/OCB/odoo.py --config=$HOME/odoo-server.conf --unaccent $@
