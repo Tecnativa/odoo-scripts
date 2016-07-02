@@ -33,7 +33,7 @@ echo "BACKUP: DATABASE = $database, TIME = $NOW" > $logfile
 read -s -p "Enter DB Password for user '$USER': " db_password
 
 echo -n "Backup database: $database ... "
-PGPASSWORD="$db_password" /usr/bin/pg_dump -Fc -v -U "$USER" -W --host $HOST -f "${NOW}-${database}.dump" "$database" >> $logfile 2>&1
+PGPASSWORD="$db_password" /usr/bin/pg_dump -Fc -v -U "$USER" --host $HOST -f "${NOW}-${database}.dump" "$database" >> $logfile 2>&1
 error=$?; if [ $error -eq 0 ]; then echo "OK"; else echo "ERROR: $error"; fi
 
 echo -n "Backup filestore: $FILESTORE/$database ... "
