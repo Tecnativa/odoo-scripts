@@ -29,13 +29,13 @@ logfile="${NOW}-${database}-backup.log"
 
 mkdir -p $HOME/backup
 cd $HOME/backup
-echo "BACKUP: DATABASE = $database, TIME = $NOW" > logfile
+echo "BACKUP: DATABASE = $database, TIME = $NOW" > $logfile
 
 echo -n "Backup database: $database ... "
-/usr/bin/pg_dump -Fc -v -U "$USER" -W --host $HOST -f "${NOW}-${database}.dump" "$database" >> logfile 2>&1
+/usr/bin/pg_dump -Fc -v -U "$USER" -W --host $HOST -f "${NOW}-${database}.dump" "$database" >> $logfile 2>&1
 error=$?; if [ $error -eq 0 ]; then echo "OK"; else echo "ERROR: $error"; fi
 
 echo -n "Backup filestore: $FILESTORE/$database ... "
-/bin/tar -czf "${NOW}-${database}.tar.gz" -C $HOME "$FILESTORE/$database" >> logfile 2>&1
+/bin/tar -czf "${NOW}-${database}.tar.gz" -C $HOME "$FILESTORE/$database" >> $logfile 2>&1
 error=$?
 if [ $error -eq 0 ]; then echo "OK"; else echo "ERROR: $error"; fi

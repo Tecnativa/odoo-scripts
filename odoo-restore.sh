@@ -43,14 +43,14 @@ read -s -p "Enter DB Password for user '$USER': " db_password
 
 NOW=`date '+%Y%m%d_%H%M%S'`
 logfile="${NOW}-${ORIGINAL_DB}-restore.log"
-echo "BACKUP: ORIGINAL DATABASE = $ORIGINAL_DB, NEW DATABASE: $database, TIME = $NOW" > logfile
+echo "BACKUP: ORIGINAL DATABASE = $ORIGINAL_DB, NEW DATABASE: $database, TIME = $NOW" > $logfile
 
 echo -n "Removing database: $database ... "
-PGPASSWORD="$db_password" /usr/bin/psql -h $HOST -U "$USER" template1 -c "DROP DATABASE \"$database\"" >> logfile 2>&1
+PGPASSWORD="$db_password" /usr/bin/psql -h $HOST -U "$USER" template1 -c "DROP DATABASE \"$database\"" >> $logfile 2>&1
 error=$?; if [ $error -eq 0 ]; then echo "OK"; else echo "ERROR: $error"; fi
 
 echo -n "Create database: $database ... "
-PGPASSWORD="$db_password" /usr/bin/psql -h $HOST -U "$USER" template1 -c "CREATE DATABASE \"$database\" WITH OWNER \"$USER\"" >> logfile 2>&1
+PGPASSWORD="$db_password" /usr/bin/psql -h $HOST -U "$USER" template1 -c "CREATE DATABASE \"$database\" WITH OWNER \"$USER\"" >> $logfile 2>&1
 error=$?; if [ $error -eq 0 ]; then echo "OK"; else echo "ERROR: $error"; fi
 
 echo "Restoring database: $database:"
@@ -66,11 +66,11 @@ error=$?; if [ $error -eq 0 ]; then echo "OK"; else echo "ERROR: $error"; fi
 
 echo -n "Restore filestore ... "
 cd $HOME
-/bin/tar -xzf "$FILE_TAR_PATH" >> logfile 2>&1
+/bin/tar -xzf "$FILE_TAR_PATH" >> $logfile 2>&1
 error=$?; if [ $error -eq 0 ]; then echo "OK"; else echo "ERROR: $error"; fi
 
 if [ "$ORIGINAL_DB" != "$database" ]; then
     echo -n "Rename filestore: $ORIGINAL_DB -> $database ... "
-    mv "$FILESTORE/$ORIGINAL_DB" "$FILESTORE/$database" >> logfile 2>&1
+    mv "$FILESTORE/$ORIGINAL_DB" "$FILESTORE/$database" >> $logfile 2>&1
     error=$?; if [ $error -eq 0 ]; then echo "OK"; else echo "ERROR: $error"; fi
 fi
