@@ -40,14 +40,17 @@ FILE_DB_PATH=`realpath "$FILE_DB"`
 FILE_TAR_PATH=`realpath "$FILE_TAR"`
 ORIGINAL_DB=`echo "$file" | cut -c 17-`
 read -s -p "Enter DB Password for user '$USER': " db_password
+echo
 
 NOW=`date '+%Y%m%d_%H%M%S'`
 logfile="${NOW}-${ORIGINAL_DB}-restore.log"
 echo "BACKUP: ORIGINAL DATABASE = $ORIGINAL_DB, NEW DATABASE: $database, TIME = $NOW" > $logfile
 
-echo -n "Removing database: $database ... "
-PGPASSWORD="$db_password" /usr/bin/psql -h $HOST -U "$USER" template1 -c "DROP DATABASE \"$database\"" >> $logfile 2>&1
-error=$?; if [ $error -eq 0 ]; then echo "OK"; else echo "ERROR: $error"; fi
+if PGPASSWORD="$db_password" /usr/bin/psql -h $HOST -U "$USER" -l -F'|' -A "template1" | grep "|$USER|" | cut -d'|' -f1 | egrep -q "^$database\$"; then
+    echo -n "Removing database: $database ... "
+    PGPASSWORD="$db_password" /usr/bin/psql -h $HOST -U "$USER" template1 -c "DROP DATABASE \"$database\"" >> $logfile 2>&1
+    error=$?; if [ $error -eq 0 ]; then echo "OK"; else echo "ERROR: $error"; fi
+fi
 
 echo -n "Create database: $database ... "
 PGPASSWORD="$db_password" /usr/bin/psql -h $HOST -U "$USER" template1 -c "CREATE DATABASE \"$database\" WITH OWNER \"$USER\"" >> $logfile 2>&1
@@ -65,12 +68,10 @@ rm -rf "$HOME/$FILESTORE/$database"
 error=$?; if [ $error -eq 0 ]; then echo "OK"; else echo "ERROR: $error"; fi
 
 echo -n "Restore filestore ... "
-cd $HOME
+cd $HOME/backup
 /bin/tar -xzf "$FILE_TAR_PATH" >> $logfile 2>&1
 error=$?; if [ $error -eq 0 ]; then echo "OK"; else echo "ERROR: $error"; fi
 
-if [ "$ORIGINAL_DB" != "$database" ]; then
-    echo -n "Rename filestore: $ORIGINAL_DB -> $database ... "
-    mv "$FILESTORE/$ORIGINAL_DB" "$FILESTORE/$database" >> $logfile 2>&1
-    error=$?; if [ $error -eq 0 ]; then echo "OK"; else echo "ERROR: $error"; fi
-fi
+echo -n "Rename filestore: $ORIGINAL_DB -> $database ... "
+mv "$HOME/backup/$FILESTORE/$ORIGINAL_DB" "$HOME/$FILESTORE/$database" >> $logfile 2>&1
+error=$?; if [ $error -eq 0 ]; then echo "OK"; else echo "ERROR: $error"; fi
