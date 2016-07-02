@@ -4,16 +4,19 @@ if [ -z "$USER" ]; then
     exit 1
 fi
 if [ -z "$HOME" ]; then
-    echo "ERROR: Instalation error, USER is not defined"
+    echo "ERROR: Instalation error, HOME is not defined"
     exit 1
 fi
 if [ -z "$HOST" ]; then
     echo "ERROR: Instalation error, HOST is not defined"
     exit 1
 fi
+if [ -z "$FILESTORE" ]; then
+    echo "ERROR: Instalation error, FILESTORE is not defined"
+    exit 1
+fi
 
 NOW=`date '+%Y%m%d_%H%M%S'`
-FILESTORE="$HOME/data/filestore"
 
 database="$1"
 if [ -z "$database" ]; then
@@ -22,7 +25,17 @@ if [ -z "$database" ]; then
     exit 1
 fi
 
+logfile="${NOW}-${database}-backup.log"
+
 mkdir -p $HOME/backup
 cd $HOME/backup
-/usr/bin/pg_dump -Fc -v -U "$USER" -W --host $HOST -f "${NOW}-${database}.dump" "$database"
-/bin/tar -czf "${NOW}-${database}.tar.gz" -C $HOME "$FILESTORE/$database"
+echo "BACKUP: DATABASE = $database, TIME = $NOW" > logfile
+
+echo -n "Backup database: $database ... "
+/usr/bin/pg_dump -Fc -v -U "$USER" -W --host $HOST -f "${NOW}-${database}.dump" "$database" >> logfile 2>&1
+error=$?; if [ $error -eq 0 ]; then echo "OK"; else echo "ERROR: $error"; fi
+
+echo -n "Backup filestore: $FILESTORE/$database ... "
+/bin/tar -czf "${NOW}-${database}.tar.gz" -C $HOME "$FILESTORE/$database" >> logfile 2>&1
+error=$?
+if [ $error -eq 0 ]; then echo "OK"; else echo "ERROR: $error"; fi

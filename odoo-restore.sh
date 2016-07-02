@@ -4,15 +4,17 @@ if [ -z "$USER" ]; then
     exit 1
 fi
 if [ -z "$HOME" ]; then
-    echo "ERROR: Instalation error, USER is not defined"
+    echo "ERROR: Instalation error, HOME is not defined"
     exit 1
 fi
 if [ -z "$HOST" ]; then
     echo "ERROR: Instalation error, HOST is not defined"
     exit 1
 fi
-
-FILESTORE="$HOME/data/filestore"
+if [ -z "$FILESTORE" ]; then
+    echo "ERROR: Instalation error, FILESTORE is not defined"
+    exit 1
+fi
 
 file="$1"
 FILE_DB="$file.dump"
@@ -39,26 +41,36 @@ FILE_TAR_PATH=`realpath "$FILE_TAR"`
 ORIGINAL_DB=`echo "$file" | cut -c 17-`
 read -s -p "Enter DB Password for user '$USER': " db_password
 
-echo "Removing database: $database"
-PGPASSWORD="$db_password" /usr/bin/psql -h $HOST -U "$USER" template1 -c "DROP DATABASE \"$database\""
-error=$?; if [ $error -ne 0 ]; then echo "ERROR: $error"; fi
+NOW=`date '+%Y%m%d_%H%M%S'`
+logfile="${NOW}-${ORIGINAL_DB}-restore.log"
+echo "BACKUP: ORIGINAL DATABASE = $ORIGINAL_DB, NEW DATABASE: $database, TIME = $NOW" > logfile
 
-echo "Create database: $database"
-PGPASSWORD="$db_password" /usr/bin/psql -h $HOST -U "$USER" template1 -c "CREATE DATABASE \"$database\" WITH OWNER \"$USER\""
-error=$?; if [ $error -ne 0 ]; then echo "ERROR: $error"; fi
+echo -n "Removing database: $database ... "
+PGPASSWORD="$db_password" /usr/bin/psql -h $HOST -U "$USER" template1 -c "DROP DATABASE \"$database\"" >> logfile 2>&1
+error=$?; if [ $error -eq 0 ]; then echo "OK"; else echo "ERROR: $error"; fi
 
-echo "Restoring database: $database"
+echo -n "Create database: $database ... "
+PGPASSWORD="$db_password" /usr/bin/psql -h $HOST -U "$USER" template1 -c "CREATE DATABASE \"$database\" WITH OWNER \"$USER\"" >> logfile 2>&1
+error=$?; if [ $error -eq 0 ]; then echo "OK"; else echo "ERROR: $error"; fi
+
+echo "Restoring database: $database:"
+echo "------------------------------"
 PGPASSWORD="$db_password" /usr/bin/pg_restore --username "$USER" --host $HOST --dbname "$database" --no-owner "$FILE_DB"
-error=$?; if [ $error -ne 0 ]; then echo "ERROR: $error"; fi
+error=$?;
+echo "------------------------------"
+echo "   RESULT: $error"
 
-echo "Remove filestore"
-rm -rf "$FILESTORE/$database"
+echo -n "Remove filestore $HOME/$FILESTORE/$database ... "
+rm -rf "$HOME/$FILESTORE/$database"
+error=$?; if [ $error -eq 0 ]; then echo "OK"; else echo "ERROR: $error"; fi
 
-echo "Restore filestore"
+echo -n "Restore filestore ... "
 cd $HOME
-/bin/tar -xzf "$FILE_TAR_PATH"
+/bin/tar -xzf "$FILE_TAR_PATH" >> logfile 2>&1
+error=$?; if [ $error -eq 0 ]; then echo "OK"; else echo "ERROR: $error"; fi
 
 if [ "$ORIGINAL_DB" != "$database" ]; then
-    echo "Rename filestore: $ORIGINAL_DB -> $database"
-    mv "$FILESTORE/$ORIGINAL_DB" "$FILESTORE/$database"
+    echo -n "Rename filestore: $ORIGINAL_DB -> $database ... "
+    mv "$FILESTORE/$ORIGINAL_DB" "$FILESTORE/$database" >> logfile 2>&1
+    error=$?; if [ $error -eq 0 ]; then echo "OK"; else echo "ERROR: $error"; fi
 fi
