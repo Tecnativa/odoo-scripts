@@ -38,8 +38,8 @@ if ! PGPASSWORD="$db_password" /usr/bin/psql -h $HOST -U "$USER" -l -F'|' -A "te
     exit 2
 fi
 
-if [ ! -d "$FILESTORE/$database" ]; then
-    echo "ERROR: Filestore '$FILESTORE/$database' not found"
+if [ ! -d "$HOME/$FILESTORE/$database" ]; then
+    echo "ERROR: Filestore '$HOME/$FILESTORE/$database' not found"
     exit 3
 fi
 
