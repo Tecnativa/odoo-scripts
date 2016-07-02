@@ -31,8 +31,9 @@ mkdir -p $HOME/backup
 cd $HOME/backup
 echo "BACKUP: DATABASE = $database, TIME = $NOW" > $logfile
 read -s -p "Enter DB Password for user '$USER': " db_password
+echo
 
-if ! PGPASSWORD="$db_password" /usr/bin/psql -h $HOST -U "$USER" -l -F'|' -A "template1" | grep -q "|$USER|" | cut -d'|' -f1 | egrep -q "^$database\$"; then
+if ! PGPASSWORD="$db_password" /usr/bin/psql -h $HOST -U "$USER" -l -F'|' -A "template1" | grep "|$USER|" | cut -d'|' -f1 | egrep -q "^$database\$"; then
     echo "ERROR: Database '$database' not found for user '$USER'"
     exit 2
 fi
