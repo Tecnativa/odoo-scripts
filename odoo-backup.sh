@@ -25,12 +25,26 @@ if [ -z "$database" ]; then
     exit 1
 fi
 
+db_exists() {
+
+}
+
 logfile="${NOW}-${database}-backup.log"
 
 mkdir -p $HOME/backup
 cd $HOME/backup
 echo "BACKUP: DATABASE = $database, TIME = $NOW" > $logfile
 read -s -p "Enter DB Password for user '$USER': " db_password
+
+if ! PGPASSWORD="$db_password" /usr/bin/psql -h $HOST -U "$USER" -l -F'|' -A "template1" | grep -q "|$USER|" | cut -d'|' -f1 | egrep -q "^$database\$"; then
+    echo "ERROR: Database '$database' not found for user '$USER'"
+    exit 2
+fi
+
+if [ ! -d "$FILESTORE/$database" ]; then
+    echo "ERROR: Filestore '$FILESTORE/$database' not found"
+    exit 3
+fi
 
 echo -n "Backup database: $database ... "
 PGPASSWORD="$db_password" /usr/bin/pg_dump -Fc -v -U "$USER" --host $HOST -f "${NOW}-${database}.dump" "$database" >> $logfile 2>&1
