@@ -25,10 +25,6 @@ if [ -z "$database" ]; then
     exit 1
 fi
 
-db_exists() {
-
-}
-
 logfile="${NOW}-${database}-backup.log"
 
 mkdir -p $HOME/backup
