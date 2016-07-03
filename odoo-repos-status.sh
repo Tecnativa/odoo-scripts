@@ -31,9 +31,22 @@ repo_status() {
     fi
 }
 
-cd $HOME/repos
+repo="$1"
 
-for repo in $(find -maxdepth 2 -type d -name ".git" -printf '%h '); do
-    name=${repo#./}
-    repo_status $name
-done
+cd $HOME/repos
+if [ -z "$repo" ]; then
+    for repo in $(find -maxdepth 2 -type d -name ".git" -printf '%h\n' | sort); do
+        name=${repo#./}
+        repo_status $name
+    done
+else
+    if [ -d $HOME/repos/$repo ]; then
+        if [ -d $HOME/repos/$repo/.git ]; then
+            repo_status $repo
+        else
+            echo "ERROR: Repo '$HOME/repos/$repo' is not a Git repository"
+        fi
+    else
+        echo "ERROR: Repo '$HOME/repos/$repo' not found"
+    fi
+fi
