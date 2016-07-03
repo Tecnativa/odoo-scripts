@@ -7,10 +7,33 @@ fi
 repo_status() {
     name=$1
 
+    temp=/tmp/odoo_repos_status.$$.tmp
     branch=$(expr $(git -C $(pwd)/$name symbolic-ref HEAD) : 'refs/heads/\(.*\)')
     remote=$(git -C $(pwd)/$name config branch.$branch.remote)
     remote_branch=$(expr $(git -C $(pwd)/$name config branch.$branch.merge) : 'refs/heads/\(.*\)')
     remote_url=$(git -C $(pwd)/$name remote get-url $remote)
-    commit=$(git -C $(pwd)/$name log -n 1 --pretty=format:'%cd %h %an' --date=short)
-    status=$(git -C $(pwd)/$name --porcelain)
+    remote_url_short=$(expr $remote_url : 'https\?://github.com/\(.*\)')
+    if [ -z "$remote_url_short" ]; then remote_url_short=$(expr $remote_url : 'https\?://\(.*\)'); fi
+    if [ -z "$remote_url_short" ]; then remote_url_short=$(expr $remote_url : 'git@\(.*\)'); fi
+    if [ -z "$remote_url_short" ]; then remote_url_short=$remote_url; fi
+    last_commit=$(git -C $(pwd)/$name log -n 1 --pretty=format:'%cd %h %an' --date=short)
+    commit=${last_commit:0:30}
+    git -C $(pwd)/$name status --porcelain > $temp 2>&1
+    position=`if [[ $(git -C $(pwd)/$name status --porcelain -b | grep '##') =~ \[(.*)\] ]]; then echo ${BASH_REMATCH[1]}; fi`
+    if [ -z "$position" ]; then position='OK'; fi
+    if [ -n "$(cat $temp)" ]; then position='DIRTY'; fi
+
+    printf "%-26s - %-30s - %-10s - %-20s - %s\n" "$name" "$commit" "$position" "$branch" "$remote_url_short"
+    if [ "$position" == 'DIRTY' ]; then
+        echo "----------------------------------------------------------------"
+        cat $temp
+        echo "----------------------------------------------------------------"
+    fi
 }
+
+cd $HOME/repos
+
+for repo in $(find -maxdepth 2 -type d -name ".git" -printf '%h '); do
+    name=${repo#./}
+    repo_status $name
+done
