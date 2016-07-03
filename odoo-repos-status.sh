@@ -23,7 +23,7 @@ repo_status() {
     if [ -z "$position" ]; then position='OK'; fi
     if [ -n "$(cat $temp)" ]; then position='DIRTY'; fi
 
-    printf "%-26s - %-30s - %-10s - %-20s - %s\n" "$name" "$commit" "$position" "$branch" "$remote_url_short"
+    printf "%-28s - %-30s - %-10s - %-20s - %s\n" "$name" "$commit" "$position" "$branch" "$remote_url_short"
     if [ "$position" == 'DIRTY' ]; then
         echo "----------------------------------------------------------------"
         cat $temp
