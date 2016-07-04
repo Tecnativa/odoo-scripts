@@ -35,7 +35,7 @@ repo_reset() {
         echo "[?] $name has no tracking branch: remote = '$remote', remote_branch = '$remote_branch'"
     else
         printf "[ ] %-28s - Checkout to %s:%s ... " "$name" "$remote" "$remote_branch"
-        git -C $(pwd)/$name checkout $remote/$remote_branch > $temp 2>&1
+        git -C $(pwd)/$name checkout $remote_branch > $temp 2>&1
         error=$?; if [ $error -ne 0 ]; then show_error $error $temp; return $error; fi
         echo "OK"
     fi
