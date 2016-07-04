@@ -75,7 +75,7 @@ if [ -z "$repo" ]; then
             repo_update $name
         done
     fi
-    odoo_status
+    odoo_update
 else
     if [ "$repo" == 'odoo' ]; then
         odoo_update
