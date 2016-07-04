@@ -31,22 +31,39 @@ repo_status() {
     fi
 }
 
+odoo_status() {
+    cd $HOME
+    if [ -d $HOME/OCB/.git ]; then
+        repo_status OCB
+    elif [ -d $HOME/odoo/.git ]; then
+        repo_status odoo
+    fi
+}
+
 repo="$1"
 
-cd $HOME/repos
 if [ -z "$repo" ]; then
-    for repo in $(find -maxdepth 2 -type d -name ".git" -printf '%h\n' | sort); do
-        name=${repo#./}
-        repo_status $name
-    done
+    if [ -d $HOME/repos ]; then
+        cd $HOME/repos
+        for repo in $(find -maxdepth 2 -type d -name ".git" -printf '%h\n' | sort); do
+            name=${repo#./}
+            repo_status $name
+        done
+    fi
+    odoo_status
 else
-    if [ -d $HOME/repos/$repo ]; then
-        if [ -d $HOME/repos/$repo/.git ]; then
-            repo_status $repo
-        else
-            echo "ERROR: Repo '$HOME/repos/$repo' is not a Git repository"
-        fi
+    if [ "$repo" == 'odoo' ]; then
+        odoo_status
+    elif [ -d $HOME/repos/$repo/.git ]; then
+        cd $HOME/repos
+        repo_status $repo
+    elif [ -d $HOME/$repo/.git ]; then
+        cd $HOME
+        repo_status $repo
+    elif [ -d $repo/.git ]; then
+        cd $(dirname $repo)
+        repo_status $(basename $repo)
     else
-        echo "ERROR: Repo '$HOME/repos/$repo' not found"
+        echo "ERROR: Repo '$repo' not found"
     fi
 fi
