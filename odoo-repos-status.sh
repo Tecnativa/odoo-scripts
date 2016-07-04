@@ -29,6 +29,7 @@ repo_status() {
         cat $temp
         echo "----------------------------------------------------------------"
     fi
+    rm -rf $temp
 }
 
 odoo_status() {

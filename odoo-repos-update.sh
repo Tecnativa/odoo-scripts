@@ -12,6 +12,7 @@ show_error() {
     echo "----------------------------------------------------------------"
     cat $output
     echo "----------------------------------------------------------------"
+    rm -rf $output
 }
 
 repo_update() {
@@ -52,6 +53,7 @@ repo_update() {
             echo "OK"
         fi
     fi
+    rm -rf $temp
 }
 
 odoo_update() {
