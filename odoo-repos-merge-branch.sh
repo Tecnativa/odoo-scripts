@@ -16,8 +16,8 @@ fi
 repo="$1"
 
 show_error() {
-    error=$1
-    output=$2
+    local error=$1
+    local output=$2
 
     echo "ERROR: $error";
     if [ -n "$output" ] && [ -f $output ]; then
@@ -29,17 +29,21 @@ show_error() {
 }
 
 merge_branch() {
-    name=$1
-    pr=$2
-    merge_remote=$3
-    merge_remote_url=$4
-    merge_remote_branch=$5
+    local name=$1
+    local pr=$2
+    local merge_remote=$3
+    local merge_remote_url=$4
+    local merge_remote_branch=$5
+    local error=0
 
-    temp=/tmp/odoo_repos_merge_branch.$$.tmp
-    branch=$(expr $(git -C $(pwd)/$name symbolic-ref HEAD) : 'refs/heads/\(.*\)')
-    remote=$(git -C $(pwd)/$name config branch.$branch.remote)
-    remote_branch=$(expr $(git -C $(pwd)/$name config branch.$branch.merge) : 'refs/heads/\(.*\)')
-    status=''
+    local temp=/tmp/odoo_repos_merge_branch.$$.tmp
+    git -C $(pwd)/$name symbolic-ref HEAD > $temp 2>&1
+    error=$?; if [ $error -ne 0 ]; then printf "%-28s - " "$name"; show_error "No HEAD ref"; return $error; fi
+    local head=$(cat $temp)
+    local branch=$(expr $head : 'refs/heads/\(.*\)')
+    local remote=$(git -C $(pwd)/$name config branch.$branch.remote)
+    local remote_branch=$(expr $(git -C $(pwd)/$name config branch.$branch.merge) : 'refs/heads/\(.*\)')
+    local status=''
     git -C $(pwd)/$name status --porcelain > $temp 2>&1
     if [ -n "$(cat $temp)" ]; then status='DIRTY'; fi
 
@@ -52,7 +56,7 @@ merge_branch() {
     else
         printf "%-28s - Merging branch: [%s] %s/%s\n" "$name" "$pr" "$merge_remote" "$merge_remote_branch"
 
-        new_branch="${branch}_${pr}"
+        local new_branch="${branch}_${pr}"
 
         if ! git -C $(pwd)/$name remote | egrep -q "^$merge_remote\$"; then
             echo -n "   - Adding remote '$merge_remote' ($merge_remote_url) ... "

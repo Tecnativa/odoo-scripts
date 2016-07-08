@@ -4,22 +4,39 @@ if [ -z "$HOME" ]; then
     exit 1
 fi
 
-repo_status() {
-    name=$1
+show_error() {
+    local error=$1
+    local output=$2
 
-    temp=/tmp/odoo_repos_status.$$.tmp
-    branch=$(expr $(git -C $(pwd)/$name symbolic-ref HEAD) : 'refs/heads/\(.*\)')
-    remote=$(git -C $(pwd)/$name config branch.$branch.remote)
-    remote_branch=$(expr $(git -C $(pwd)/$name config branch.$branch.merge) : 'refs/heads/\(.*\)')
-    remote_url=$(git -C $(pwd)/$name remote get-url $remote)
-    remote_url_short=$(expr $remote_url : 'https\?://github.com/\(.*\)')
+    echo "ERROR: $error";
+    if [ -n "$output" ] && [ -f $output ]; then
+        echo "----------------------------------------------------------------"
+        cat $output
+        echo "----------------------------------------------------------------"
+        rm -rf $output
+    fi
+}
+
+repo_status() {
+    local name=$1
+    local error=0
+
+    local temp=/tmp/odoo_repos_status.$$.tmp
+    git -C $(pwd)/$name symbolic-ref HEAD > $temp 2>&1
+    error=$?; if [ $error -ne 0 ]; then printf "%-28s - " "$name"; show_error "No HEAD ref"; return $error; fi
+    local head=$(cat $temp)
+    local branch=$(expr $head : 'refs/heads/\(.*\)')
+    local remote=$(git -C $(pwd)/$name config branch.$branch.remote)
+    local remote_branch=$(expr $(git -C $(pwd)/$name config branch.$branch.merge) : 'refs/heads/\(.*\)')
+    local remote_url=$(git -C $(pwd)/$name remote get-url $remote)
+    local remote_url_short=$(expr $remote_url : 'https\?://github.com/\(.*\)')
     if [ -z "$remote_url_short" ]; then remote_url_short=$(expr $remote_url : 'https\?://\(.*\)'); fi
     if [ -z "$remote_url_short" ]; then remote_url_short=$(expr $remote_url : 'git@\(.*\)'); fi
     if [ -z "$remote_url_short" ]; then remote_url_short=$remote_url; fi
-    last_commit=$(git -C $(pwd)/$name log -n 1 --pretty=format:'%cd %h %an' --date=short)
-    commit=${last_commit:0:30}
+    local last_commit=$(git -C $(pwd)/$name log -n 1 --pretty=format:'%cd %h %an' --date=short)
+    local commit=${last_commit:0:30}
     git -C $(pwd)/$name status --porcelain > $temp 2>&1
-    position=`if [[ $(git -C $(pwd)/$name status --porcelain -b | grep '##') =~ \[(.*)\] ]]; then echo ${BASH_REMATCH[1]}; fi`
+    local position=`if [[ $(git -C $(pwd)/$name status --porcelain -b | grep '##') =~ \[(.*)\] ]]; then echo ${BASH_REMATCH[1]}; fi`
     if [ -z "$position" ]; then position='OK'; fi
     if [ -n "$(cat $temp)" ]; then position='DIRTY'; fi
 
