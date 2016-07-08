@@ -5,24 +5,35 @@ if [ -z "$HOME" ]; then
 fi
 
 show_error() {
-    error=$1
-    output=$2
+    local error=$1
+    local output=$2
 
     echo "ERROR: $error";
-    echo "----------------------------------------------------------------"
-    cat $output
-    echo "----------------------------------------------------------------"
-    rm -rf $output
+    if [ -n "$output" ] && [ -f $output ]; then
+        echo "----------------------------------------------------------------"
+        cat $output
+        echo "----------------------------------------------------------------"
+        rm -rf $output
+    fi
 }
 
 repo_reset() {
-    name=$1
+    local name=$1
+    local error=0
+    local head=
 
-    temp=/tmp/odoo_repos_reset.$$.tmp
-    branch=$(expr $(git -C $(pwd)/$name symbolic-ref HEAD) : 'refs/heads/\(.*\)')
-    remote=$(git -C $(pwd)/$name config branch.$branch.remote)
-    remote_branch=$(expr $(git -C $(pwd)/$name config branch.$branch.merge) : 'refs/heads/\(.*\)')
-    status=''
+    local temp=/tmp/odoo_repos_reset.$$.tmp
+    if [ -z "$FORCE_BRANCH" ]; then
+        git -C $(pwd)/$name symbolic-ref HEAD > $temp 2>&1
+        error=$?; if [ $error -ne 0 ]; then printf "[?] %-28s - " "$name"; show_error "No HEAD ref"; return $error; fi
+        head=$(cat $temp)
+    else
+        head="refs/heads/$FORCE_BRANCH"
+    fi
+    local branch=$(expr $head : 'refs/heads/\(.*\)')
+    local remote=$(git -C $(pwd)/$name config branch.$branch.remote)
+    local remote_branch=$(expr $(git -C $(pwd)/$name config branch.$branch.merge) : 'refs/heads/\(.*\)')
+    local status=''
     git -C $(pwd)/$name status --porcelain > $temp 2>&1
     if [ -n "$(cat $temp)" ]; then status='DIRTY'; fi
 
@@ -50,6 +61,12 @@ odoo_reset() {
         repo_reset odoo
     fi
 }
+
+if [ "$1" == "-f" ]; then
+    shift
+    FORCE_BRANCH="$1"
+    shift
+fi
 
 repo="$1"
 

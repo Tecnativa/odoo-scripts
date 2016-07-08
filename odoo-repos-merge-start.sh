@@ -16,13 +16,17 @@ if [ -z "$repo" ]; then
 fi
 
 merge_start() {
-    name=$1
+    local name=$1
+    local error=0
 
-    temp=/tmp/odoo_repos_merge_start.$$.tmp
-    branch=$(expr $(git -C $(pwd)/$name symbolic-ref HEAD) : 'refs/heads/\(.*\)')
-    remote=$(git -C $(pwd)/$name config branch.$branch.remote)
-    remote_branch=$(expr $(git -C $(pwd)/$name config branch.$branch.merge) : 'refs/heads/\(.*\)')
-    status=''
+    local temp=/tmp/odoo_repos_merge_start.$$.tmp
+    git -C $(pwd)/$name symbolic-ref HEAD > $temp 2>&1
+    error=$?; if [ $error -ne 0 ]; then printf "%-28s - " "$name"; show_error "No HEAD ref"; return $error; fi
+    local head=$(cat $temp)
+    local branch=$(expr $head : 'refs/heads/\(.*\)')
+    local remote=$(git -C $(pwd)/$name config branch.$branch.remote)
+    local remote_branch=$(expr $(git -C $(pwd)/$name config branch.$branch.merge) : 'refs/heads/\(.*\)')
+    local status=''
     git -C $(pwd)/$name status --porcelain > $temp 2>&1
     if [ -n "$(cat $temp)" ]; then status='DIRTY'; fi
 
@@ -33,8 +37,8 @@ merge_start() {
     else
         printf "%-28s - Start merging:\n" "$name"
 
-        all_branch=
-        new_branch='merge'
+        local all_branch=
+        local new_branch='merge'
 
         echo -n "   - Fetch remote '$remote' ... "
         git -C $(pwd)/$name fetch $remote > $temp 2>&1
