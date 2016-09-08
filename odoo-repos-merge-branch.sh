@@ -100,6 +100,8 @@ odoo_merge_branch() {
         merge_branch OCB ${@:2}
     elif [ -d $HOME/odoo/.git ]; then
         merge_branch odoo ${@:2}
+    elif [ -d $HOME/openerp/.git ]; then
+        merge_branch openerp ${@:2}
     fi
 }
 

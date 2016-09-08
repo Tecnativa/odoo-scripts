@@ -59,6 +59,8 @@ odoo_reset() {
         repo_reset OCB
     elif [ -d $HOME/odoo/.git ]; then
         repo_reset odoo
+    elif [ -d $HOME/openerp/.git ]; then
+        repo_reset openerp
     fi
 }
 
@@ -71,6 +73,12 @@ fi
 repo="$1"
 
 if [ -z "$repo" ]; then
+    # All repos in home, except Odoo
+    for repo in $(find -maxdepth 2 -type d -name ".git" -printf '%h\n' | grep -v '^./odoo$' | grep -v '^./OCB$' | grep -v '^./openerp$' | sort); do
+        name=${repo#./}
+        repo_reset $name
+    done
+    # All repos in home/repos
     if [ -d $HOME/repos ]; then
         cd $HOME/repos
         for repo in $(find -maxdepth 2 -type d -name ".git" -printf '%h\n' | sort); do
@@ -78,6 +86,7 @@ if [ -z "$repo" ]; then
             repo_reset $name
         done
     fi
+    # Odoo repo
     odoo_reset
 else
     if [ "$repo" == 'odoo' ]; then

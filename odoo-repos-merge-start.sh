@@ -82,6 +82,8 @@ odoo_merge_start() {
         merge_start OCB
     elif [ -d $HOME/odoo/.git ]; then
         merge_start odoo
+    elif [ -d $HOME/openerp/.git ]; then
+        merge_start openerp
     fi
 }
 

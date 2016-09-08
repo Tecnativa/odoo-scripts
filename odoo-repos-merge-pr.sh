@@ -114,6 +114,8 @@ odoo_merge_pr() {
         merge_pr OCB ${@:2}
     elif [ -d $HOME/odoo/.git ]; then
         merge_pr odoo ${@:2}
+    elif [ -d $HOME/openerp/.git ]; then
+        merge_pr openerp ${@:2}
     fi
 }
 
